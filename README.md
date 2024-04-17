@@ -7,8 +7,8 @@ A app that shows your iPhone GPS data.
 - Speed/Acceleration graph with changable duration
 - Tap on the speed or the acceleration to change unit (Speed: km/h, m/s; Acceleration: km/h*s, m/s^2)
 
-![image]
-<video src=''>
+![image](https://github.com/AndyTung401/SwiftUI-Speedometer/blob/main/IMG_4817.PNG)
+<video src='https://github.com/AndyTung401/SwiftUI-Speedometer/blob/main/RPReplay_Final1713337534.mp4'>
 
 ## Acceleration
 Acceleration is acquired by both calculation of speed changes and device motion data (CoreMotion)
