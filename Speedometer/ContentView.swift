@@ -275,7 +275,11 @@ struct ContentView: View {
                 .font(.body)
                 
                 if locationViewModel.log != .none{
-                    Text(locationViewModel.log ?? "").foregroundStyle(.red)
+                    Text(locationViewModel.log ?? "")
+                        .foregroundStyle(.red)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.1)
+                        .padding()
                 }//location log
             }//Vstack1
             .padding()
