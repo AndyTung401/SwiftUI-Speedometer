@@ -16,7 +16,7 @@ Acceleration can be acquired by either calculation of speed changes or device mo
 
 ## Graph
 The graph is rendered by SwiftUI Charts. 
-The speed, acceleration data will be saved in a temporary array whose length is under control in order to send to the chart.
+The speed, acceleration data will be saved in a temporary array whose length is determined by a slider in order to send to the chart.
 
 ## References
 The CoreLocation codes refers to [Andrew11US/AF-Swift-Tutorials](https://github.com/Andrew11US/AF-Swift-Tutorials/blob/main/core-location/core-location/ContentView.swift) and the CoreMotion codes refers to [Asperi's answer](https://stackoverflow.com/questions/62020407/swiftui-and-core-motion) on stack overflow.
