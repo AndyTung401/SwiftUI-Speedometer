@@ -77,6 +77,30 @@ public func degreeFormatter(_ input: Double) -> String{
 """)
 }
 
+struct SpeedometerGaugeStyle: GaugeStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Circle()
+                .trim(from: 0, to: 0.75)
+                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .rotationEffect(.degrees(135))
+            Circle()
+                .trim(from: 0, to: 0.75*configuration.value)
+                .stroke(AngularGradient(colors: [.blue, .cyan], center: .center, angle: .degrees(-5)), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .rotationEffect(.degrees(135))
+            VStack {
+                Spacer()
+                HStack {
+                    configuration.minimumValueLabel
+                    Spacer()
+                    configuration.maximumValueLabel
+                }
+                .frame(width: 160, height: 55, alignment: .top)
+            }
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var usingKMH = true
     @ObservedObject private var locationViewModel = LocationViewModel()
@@ -102,7 +126,7 @@ struct ContentView: View {
     @State private var showSpeedChart = true
     
     var body: some View {
-        ZStack{
+        VStack{
             VStack(spacing: 10) {
                 HStack {
                     Image(systemName: "safari").rotationEffect(Angle(degrees: -45-locationViewModel.azi))
@@ -137,61 +161,75 @@ struct ContentView: View {
                     .frame(width: 55, alignment: .leading)
                 }//compass hstack
                 .font(.system(size: 30))
+                .padding(.top)
                 
                 HStack(spacing: 15){
                     HStack(spacing: 0){
                         Text("\(degreeFormatter(locationViewModel.lat))")
                         Text(" \(locationViewModel.lat<0 ? "S" : "N")")
                     }//lat
-                    .frame(width: 150, alignment: .trailing)
+                    .frame(width: 130, alignment: .trailing)
                     HStack(spacing: 0){
                         Text("\(degreeFormatter(locationViewModel.lon))")
                         Text(" \(locationViewModel.lon<0 ? "W" : "E")")
                     }//lon
-                    .frame(width: 150, alignment: .leading)
+                    .frame(width: 130, alignment: .leading)
                 }//coord hstack
+                .font(.system(size: 20))
+                .fontWeight(.regular)
                 
-                Divider().overlay(Color(.systemGray)).padding(10)
-                
-                Button {
-                    usingKMH.toggle()
-                } label: {
+                Divider().overlay(Color(.systemGray)).padding(10).padding(.horizontal)
+
+                ZStack{
+                    Gauge(value: usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed, in: usingKMH ? 0...200 : 0...50) {
+                        
+                    } currentValueLabel: {
+                        Text("")
+                    } minimumValueLabel: {
+                        Text("0")
+                    } maximumValueLabel: {
+                        Text(usingKMH ? "200" : "50")
+                    }
+                    .gaugeStyle(SpeedometerGaugeStyle())
+                    
                     VStack(spacing: 10){
                         HStack(spacing: 15){
-                            HStack(spacing: 0){
-                                Text("\(String(format: "%.2f", locationViewModel.speed<0 ? 0 : usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed)) ")
-                                    .frame(width: 175, alignment: .trailing)
+                            HStack(spacing: 3){
+                                Text("\(String(format: "%.1f", locationViewModel.speed<0 ? 0 : usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed))")
+                                    .font(.system(size: 60))
+                                    .padding(.leading)
                                 Text("\(usingKMH ? "km/h" : "m/s")")
-                                    .frame(width: 130, alignment: .leading)
+                                    .font(.system(size: 25))
+                                    .offset(y: 7)
                             }//km/h speed
                         }//speed hstack
-                        .font(.system(size: 45))
                         .fontWeight(.semibold)
-                        .padding(.top, 5)
-                        .padding(5)
                         
-                        HStack(spacing:0){
-                            HStack(spacing:0){
-                                Text("\(deltaSpeed<0 ? "-" : " ")").frame(width: 10)
-                                Text("\(String(format: "%.2f" , locationViewModel.speed<0 ? 0 : usingKMH ?  abs(deltaSpeed*3.6) : abs(deltaSpeed)))")
-                                Text(" (")
-                                Text("\(String(format: "%.1f" , usingKMH ? acceleration*9.8*3.6 : acceleration*9.8))")
-                                    .frame(width:52, alignment: .trailing)
-                                Image(systemName: "gyroscope").font(.system(size: 15)).padding(.bottom, 5)
-                                Text(") ")
-                            }
-                            .frame(width: 175, alignment: .trailing)
-                            HStack(spacing: 0){
-                                Text("\(usingKMH ? "km/h·s" : " m/s")")
-                                Text("\(usingKMH ? "" : "2")").font(.system(size: 15)).baselineOffset(9.0).fontWeight(.regular)
-                            }
-                            .frame(width: 80, alignment: .leading)
-                        }//acc hstack
+//                        HStack(spacing:0){
+//                            HStack(spacing:0){
+//                                Text("\(deltaSpeed<0 ? "-" : " ")").frame(width: 10)
+//                                Text("\(String(format: "%.2f" , locationViewModel.speed<0 ? 0 : usingKMH ?  abs(deltaSpeed*3.6) : abs(deltaSpeed)))")
+//                                Text(" (")
+//                                Text("\(String(format: "%.1f" , usingKMH ? acceleration*9.8*3.6 : acceleration*9.8))")
+//                                    .frame(width:52, alignment: .trailing)
+//                                Image(systemName: "gyroscope").font(.system(size: 15)).padding(.bottom, 5)
+//                                Text(") ")
+//                            }
+//                            .frame(width: 175, alignment: .trailing)
+//                            HStack(spacing: 0){
+//                                Text("\(usingKMH ? "km/h·s" : " m/s")")
+//                                Text("\(usingKMH ? "" : "2")").font(.system(size: 15)).baselineOffset(9.0).fontWeight(.regular)
+//                            }
+//                            .frame(width: 80, alignment: .leading)
+//                        }//acc hstack
                     }
+                    .padding()
                     .animation(.bouncy(duration: 0.3), value: usingKMH)
-                }//speed and acc button
-                .buttonStyle(.plain)
-                .padding(.bottom, 10)
+                }
+                .onTapGesture {
+                    usingKMH.toggle()
+                }
+                .padding(.top)
                 
                 HStack(spacing:0){
                     Picker("", selection: $showSpeedChart){
@@ -199,7 +237,7 @@ struct ContentView: View {
                         Text("Acceleration").tag(false)
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 300)
+                    .frame(width: 300, height: 10)
                 }//graph mode picker
                 
                 if showSpeedChart{
@@ -215,7 +253,7 @@ struct ContentView: View {
                     .chartXAxis(.hidden)
                     .chartYAxis(.visible)
                     .padding()
-                    .frame(width: 300, height: 200)
+                    .frame(width: 300, height: 175)
                 } else {
                     VStack(spacing:10){
                         HStack(spacing:0){
@@ -225,7 +263,7 @@ struct ContentView: View {
                                 Text("CLMotion").tag(true)
                             }
                             .pickerStyle(.segmented)
-                            .frame(width: 200)
+                            .frame(width: 200, height: 45)
                         }
                         
                         if !accChartUseMotion{
@@ -241,7 +279,7 @@ struct ContentView: View {
                             .chartXAxis(.hidden)
                             .chartYAxis(.visible)
                             .padding()
-                            .frame(width: 300, height: 150)
+                            .frame(width: 300)
                         } else {
                             Chart{
                                 ForEach(0..<accMotionHistory.count, id: \.self){
@@ -255,9 +293,9 @@ struct ContentView: View {
                             .chartXAxis(.hidden)
                             .chartYAxis(.visible)
                             .padding()
-                            .frame(width: 300, height: 150)
+                            .frame(width: 300)
                         }
-                    }.frame(height: 200)
+                    }.frame(height: 175)
                 }
                 
                 
@@ -282,12 +320,10 @@ struct ContentView: View {
                         .padding()
                 }//location log
             }//Vstack1
-            .padding()
             .padding(.bottom)
             
             
             VStack{
-                Spacer()
                 if locationViewModel.horizontalAccuracy < 0 {
                     Text("Heading unavaliable")
                         .font(.system(size: 17))
@@ -323,7 +359,7 @@ struct ContentView: View {
                     }
                     .font(.system(size: 17))
                 }//Speed Acc
-            }//Vstack2
+            }//AccuracyStack
             .fontWeight(.regular)
             .opacity(0.9)
             .padding(.bottom, -5)

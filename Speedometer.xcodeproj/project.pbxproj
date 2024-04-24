@@ -83,6 +83,8 @@
 			dependencies = (
 			);
 			name = Speedometer;
+			packageProductDependencies = (
+			);
 			productName = Speedometer;
 			productReference = CBB838BE2BCFA2DF006536EA /* Speedometer.app */;
 			productType = "com.apple.product-type.application";
@@ -111,6 +113,8 @@
 				Base,
 			);
 			mainGroup = CBB838B52BCFA2DF006536EA;
+			packageReferences = (
+			);
 			productRefGroup = CBB838BF2BCFA2DF006536EA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
