@@ -92,8 +92,10 @@ struct SpeedometerGaugeStyle: GaugeStyle {
                 Spacer()
                 HStack {
                     configuration.minimumValueLabel
+                        .frame(width: 80, alignment: .leading)
                     Spacer()
                     configuration.maximumValueLabel
+                        .frame(width: 80, alignment: .trailing)
                 }
                 .frame(width: 160, height: 55, alignment: .top)
             }
@@ -102,8 +104,67 @@ struct SpeedometerGaugeStyle: GaugeStyle {
     }
 }
 
+func maximumSpeed(_ unit: Int, _ speedometerScale: Int) -> Int {
+    if unit == 0 {
+        switch speedometerScale {
+        case 0:
+            return 50
+        case 1:
+            return 100
+        case 2:
+            return 150
+        default:
+            return 200
+        }
+    } else if unit == 1 {
+        switch speedometerScale {
+        case 0:
+            return 15
+        case 1:
+            return 30
+        case 2:
+            return 40
+        default:
+            return 50
+        }
+    } else {
+        switch speedometerScale {
+        case 0:
+            return 25
+        case 1:
+            return 50
+        case 2:
+            return 100
+        default:
+            return 150
+        }
+    }
+}
+
+func speedUnitConverter(_ unit: Int, _ speed/*m/s*/: Double) -> Double {
+    switch unit {
+    case 0:
+        return speed*3.6
+    case 1:
+        return speed
+    default:
+        return speed*2.2369362921
+    }
+}
+
+func speedUnit(_ unit: Int) -> String {
+    switch unit {
+    case 0:
+        return "km/h"
+    case 1:
+        return "m/s"
+    default:
+        return "mph"
+    }
+}
+
 struct ContentView: View {
-    @State private var usingKMH = true
+    @State private var unit: Int = 0 //0:kmh, 1:m/s, 2:mph
     @ObservedObject private var locationViewModel = LocationViewModel()
     let motionManager = CMMotionManager()
     let queue = OperationQueue()
@@ -125,6 +186,7 @@ struct ContentView: View {
     @State private var chartLength = 300.0
     @State private var accChartUseMotion = false
     @State private var showSpeedChart = true
+    @State private var speedometerScale: Int = 0 //0, 1, 2, 3
     
     var body: some View {
         TabView {
@@ -180,40 +242,53 @@ struct ContentView: View {
                         }//coord hstack
                         .font(.system(size: 25))
                     }
-                    .containerRelativeFrame(.vertical, count: 4, span: 1, spacing: 0)
+                    .containerRelativeFrame(.vertical, count: 5, span: 1, spacing: 0)
 
                     Divider().overlay(Color(.systemGray)).padding(10).padding(.horizontal)
                     
-                    ZStack{
-                        Gauge(value: usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed, in: usingKMH ? 0...200 : 0...50) {
+                    VStack {
+                        ZStack{
+                            Gauge(value: speedUnitConverter(unit, locationViewModel.speed), in: 0...Double(maximumSpeed(unit, speedometerScale))) {
+                                
+                            } currentValueLabel: {
+                                Text("")
+                            } minimumValueLabel: {
+                                Text("0")
+                            } maximumValueLabel: {
+                                Text("\(maximumSpeed(unit, speedometerScale))")
+                            }
+                            .gaugeStyle(SpeedometerGaugeStyle())
+                            .animation(.bouncy(duration: 0.3), value: unit)
+                            .animation(.bouncy(duration: 0.3), value: speedometerScale)
                             
-                        } currentValueLabel: {
-                            Text("")
-                        } minimumValueLabel: {
-                            Text("0")
-                        } maximumValueLabel: {
-                            Text(usingKMH ? "200" : "50")
+                            VStack(spacing: 10){
+                                HStack(spacing: 15){
+                                    HStack(spacing: 3){
+                                        Text("\(String(format: "%.1f", locationViewModel.speed<0 ? 0 : speedUnitConverter(unit, locationViewModel.speed)))")
+                                            .font(.system(size: 60))
+                                            .padding(.leading)
+                                        Text(speedUnit(unit))
+                                            .font(.system(size: 25))
+                                            .offset(y: 7)
+                                    }//km/h speed
+                                }//speed hstack
+                                .fontWeight(.semibold)
+                            }
+                            .padding()
+                            .animation(.bouncy(duration: 0.3), value: unit)
                         }
-                        .gaugeStyle(SpeedometerGaugeStyle())
+                        .onTapGesture {
+                            unit = (unit+1)%3
+                        }
                         
-                        VStack(spacing: 10){
-                            HStack(spacing: 15){
-                                HStack(spacing: 3){
-                                    Text("\(String(format: "%.1f", locationViewModel.speed<0 ? 0 : usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed))")
-                                        .font(.system(size: 60))
-                                        .padding(.leading)
-                                    Text("\(usingKMH ? "km/h" : "m/s")")
-                                        .font(.system(size: 25))
-                                        .offset(y: 7)
-                                }//km/h speed
-                            }//speed hstack
-                            .fontWeight(.semibold)
+                        Picker("", selection: $speedometerScale) {
+                            Text("\(maximumSpeed(unit, 0))").tag(0)
+                            Text("\(maximumSpeed(unit, 1))").tag(1)
+                            Text("\(maximumSpeed(unit, 2))").tag(2)
+                            Text("\(maximumSpeed(unit, 3))").tag(3)
                         }
-                        .padding()
-                        .animation(.bouncy(duration: 0.3), value: usingKMH)
-                    }
-                    .onTapGesture {
-                        usingKMH.toggle()
+                        .pickerStyle(.segmented)
+                        .containerRelativeFrame(.horizontal, count: 4, span: 3, spacing: 0)
                     }
                     .containerRelativeFrame(.vertical, count: 7, span: 4, spacing: 0)
                     
@@ -231,11 +306,11 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     if locationViewModel.horizontalAccuracy < 0 {
-                        Text("Heading unavaliable")
+                        Text("Azimuth unavaliable")
                             .font(.system(size: 17))
                     } else {
                         HStack(spacing:3){
-                            Text("Heading: ")
+                            Text("Azimuth: ")
                             Image(systemName: "plusminus")
                             Text("\(String(format: "%.2f", locationViewModel.headingAccuracy))º")
                         }
@@ -261,7 +336,8 @@ struct ContentView: View {
                         HStack(spacing:3){
                             Text("Speed: ")
                             Image(systemName: "plusminus")
-                            Text("\(usingKMH ? "\(String(format: "%.2f", locationViewModel.speedAccuracy*3.6)) km/h" : "\(String(format: "%.2f", locationViewModel.speedAccuracy)) m/s")")
+                            Text(String(format: "%.2f ", speedUnitConverter(unit, locationViewModel.speedAccuracy)))
+                            Text(speedUnit(unit))
                         }
                         .font(.system(size: 17))
                     }//Speed Acc
@@ -269,6 +345,7 @@ struct ContentView: View {
                 .fontWeight(.regular)
                 .opacity(0.8)
                 .padding(.bottom)
+                .animation(.bouncy(duration: 0.3), value: unit)
             }//Zstack
             .tabItem { Label("Speedometer", systemImage: "speedometer") }
             
@@ -277,10 +354,10 @@ struct ContentView: View {
                     VStack(spacing: 10){
                         HStack(spacing: 15){
                             HStack(spacing: 3){
-                                Text("\(String(format: "%.1f", locationViewModel.speed<0 ? 0 : usingKMH ? locationViewModel.speed*3.6 : locationViewModel.speed))")
+                                Text("\(String(format: "%.1f", locationViewModel.speed<0 ? 0 : speedUnitConverter(unit, locationViewModel.speed)))")
                                     .font(.system(size: 60))
                                     .padding(.leading)
-                                Text("\(usingKMH ? "km/h" : "m/s")")
+                                Text(speedUnit(unit))
                                     .font(.system(size: 25))
                                     .offset(y: 7)
                             }//km/h speed
@@ -290,26 +367,27 @@ struct ContentView: View {
                         HStack(spacing:0){
                             HStack(spacing:0){
                                 Text("\(deltaSpeed<0 ? "-" : " ")").frame(width: 10)
-                                Text("\(String(format: "%.2f" , locationViewModel.speed<0 ? 0 : usingKMH ?  abs(deltaSpeed*3.6) : abs(deltaSpeed)))")
+                                Text("\(String(format: "%.2f" , locationViewModel.speed<0 ? 0 : abs(speedUnitConverter(unit, deltaSpeed))))")
                                 Text(" (")
-                                Text("\(String(format: "%.1f" , usingKMH ? acceleration*9.8*3.6 : acceleration*9.8))")
+                                Text("\(String(format: "%.1f" , speedUnitConverter(unit, acceleration*9.8)))")
                                     .frame(width:52, alignment: .trailing)
                                 Image(systemName: "gyroscope").font(.system(size: 15)).padding(.bottom, 5)
                                 Text(") ")
                             }
                             .frame(width: 175, alignment: .trailing)
                             HStack(spacing: 0){
-                                Text("\(usingKMH ? "km/h·s" : " m/s")")
-                                Text("\(usingKMH ? "" : "2")").font(.system(size: 15)).baselineOffset(9.0).fontWeight(.regular)
+                                Text(speedUnit(unit)+"·s")
+//                                Text("\(usingKMH ? "km/h·s" : " m/s")")
+//                                Text("\(usingKMH ? "" : "2")").font(.system(size: 15)).baselineOffset(9.0).fontWeight(.regular)
                             }
                             .frame(width: 80, alignment: .leading)
                         }//acc hstack
                     }
                     .padding()
-                    .animation(.bouncy(duration: 0.3), value: usingKMH)
+                    .animation(.bouncy(duration: 0.3), value: unit)
                 }//speed and acceleration
                 .onTapGesture {
-                    usingKMH.toggle()
+                    unit = (unit+1)%3
                 }
                 .padding()
                 
@@ -320,7 +398,7 @@ struct ContentView: View {
                         ForEach(0..<speedHistory.count, id: \.self){
                             LineMark(
                                 x: .value("x", $0),
-                                y: .value("y", usingKMH ? speedHistory[$0]*3.6 : speedHistory[$0])
+                                y: .value("y", speedUnitConverter(unit, speedHistory[$0]))
                             )
                         }
                     }
@@ -336,7 +414,7 @@ struct ContentView: View {
                                 ForEach(0..<accLocationHistory.count, id: \.self){
                                     LineMark(
                                         x: .value("x", $0),
-                                        y: .value("y", usingKMH ? accLocationHistory[$0]*3.6 : accLocationHistory[$0])
+                                        y: .value("y", speedUnitConverter(unit, accLocationHistory[$0]))
                                     )
                                 }
                             }
@@ -350,7 +428,7 @@ struct ContentView: View {
                                 ForEach(0..<accMotionHistory.count, id: \.self){
                                     LineMark(
                                         x: .value("x", $0),
-                                        y: .value("y", usingKMH ? accMotionHistory[$0]*3.6 : accMotionHistory[$0])
+                                        y: .value("y", speedUnitConverter(unit, accMotionHistory[$0]))
                                     )
                                 }
                             }
@@ -399,11 +477,11 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     if locationViewModel.horizontalAccuracy < 0 {
-                        Text("Heading unavaliable")
+                        Text("Azimuth unavaliable")
                             .font(.system(size: 17))
                     } else {
                         HStack(spacing:3){
-                            Text("Heading: ")
+                            Text("Azimuth: ")
                             Image(systemName: "plusminus")
                             Text("\(String(format: "%.2f", locationViewModel.headingAccuracy))º")
                         }
@@ -429,7 +507,9 @@ struct ContentView: View {
                         HStack(spacing:3){
                             Text("Speed: ")
                             Image(systemName: "plusminus")
-                            Text("\(usingKMH ? "\(String(format: "%.2f", locationViewModel.speedAccuracy*3.6)) km/h" : "\(String(format: "%.2f", locationViewModel.speedAccuracy)) m/s")")
+//                            Text("\(usingKMH ? "\(String(format: "%.2f", locationViewModel.speedAccuracy*3.6)) km/h" : "\(String(format: "%.2f", locationViewModel.speedAccuracy)) m/s")")
+                            Text(String(format: "%.2f ", speedUnitConverter(unit, locationViewModel.speedAccuracy)))
+                            Text(speedUnit(unit))
                         }
                         .font(.system(size: 17))
                     }//Speed Acc
@@ -438,7 +518,7 @@ struct ContentView: View {
                 .opacity(0.8)
                 .padding(.bottom)
             }
-            .tabItem { Label("Graph", systemImage: "chart.xyaxis.line") }
+            .tabItem { Label("Chart", systemImage: "chart.xyaxis.line") }
         }
         .monospacedDigit()
         .font(.system(size: 25))
