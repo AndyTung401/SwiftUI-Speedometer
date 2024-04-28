@@ -3,9 +3,9 @@ A app that shows your iPhone GPS data.
 
 ## Key Features
 - Heading azimuth, Location coordinates (Lat&Lon), Speed, Acceleration, Accuracy
-- Compass animation
+- Compass&Speedometer animation
 - Speed/Acceleration graph with changable duration
-- Tap on the speed or the acceleration to change unit (Speed: km/h, m/s; Acceleration: km/h*s, m/s^2)
+- Tap on the speed or the acceleration to change unit (Speed: km/h, m/s, mph; Acceleration: km/h*s, m/s^2, mph/s)
 
 Speedometer | Chart
 | :---:  | :---: |
