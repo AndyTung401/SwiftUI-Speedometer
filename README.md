@@ -9,7 +9,7 @@ A app that shows your iPhone GPS data.
 
 Screenshot | Screen Recording
 | :---:  | :---: |
-<img src="https://github.com/AndyTung401/SwiftUI-Speedometer/blob/main/IMG_4817.PNG" width="300"> | <video src='https://github.com/AndyTung401/SwiftUI-Speedometer/assets/109213867/665f3ead-4168-4b39-a04c-3e6e3f53e799'>
+![3DE54853-D5D9-4A1B-ADF4-961C398E8E32](https://github.com/AndyTung401/SwiftUI-Speedometer/assets/109213867/41fd808d-b278-4a2a-8c83-8ad3ba6ab09d) | ![1BBC5FBC-3760-4D96-A9A4-C3D5F82F9517](https://github.com/AndyTung401/SwiftUI-Speedometer/assets/109213867/79c2d89c-a1f4-4ae3-ac6c-e8d48514a0e9)
 
 ## Acceleration
 Acceleration can be acquired by either calculation of speed changes or device motion data (CoreMotion)
